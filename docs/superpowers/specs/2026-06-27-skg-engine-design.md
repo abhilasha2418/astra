@@ -32,7 +32,7 @@ These were settled interactively and are the binding choices for this design:
 1. **Snapshot-driven engine**, not a live tick simulator. Each scenario step is a snapshot of *observed* populations (the input); everything downstream is computed. Deterministic and demo-reliable, but the math is real and works for every node and every step with no ordering dependency.
 2. **Real JSON data files** + a loader that works in the browser (`fetch`) and Node tests (`fs`).
 3. **Graph-based flow propagation** for prediction inflow: `inflow(node) = Σ upstream(pop × outflowRate × routeShare)`. Pure function of the current snapshot + topology. Powers explainable recommendations and honest what-if impact.
-4. **Generic rule evaluator + 3 seed rules + what-if recompute** for recommendations. Impact is a genuine recompute of the prediction with modified routing/metering, not a hand-typed number.
+4. **Generic rule evaluator + 4 seed rules + what-if recompute** for recommendations (diversion, gate metering, medical/river dispatch, stagnation release). Impact is a genuine recompute of the prediction with modified routing/metering, not a hand-typed number.
 5. **Full SKG backbone.** A typed entity store + append-only event log + a thin reasoner interface is the architecture. Crowd-flow and all variable groups are reasoners over one shared graph.
 6. **Deep variable coverage** — all four groups are computed, not stubbed: crowd-density physics, human physiology load, finite resources & honest recommendations, sensor trust.
 7. **Research-gap closures folded in:** Zones as first-class entities (A), an image→count vision stub (B), queue formation (C), static infrastructure/historical node layers (D). "Digital Twin" vocabulary is aligned in pitch/docs (E).
@@ -113,6 +113,8 @@ Entities carry the doc's base, spatial, and operational fields. Illustrative sha
 
 Fields: `from_node_id`, `to_node_id`, `distance_meters`, `width_meters`, `safe_flow_per_minute`, `max_flow_per_minute`, `outflowRatePerMinute`, `routeShare`, `is_emergency_route`, `accessibility { pedestrian, ambulance, boat }`, plus computed `current_flow_per_minute`, `predicted_flow_per_minute`, `density_people_per_square_meter`, `congestion_score`, `risk_score`.
 
+**Edge state is first-class** (validated by Kumbh 2025 — see [06-kumbh-2025-validation.md](../../06-kumbh-2025-validation.md)). Each edge carries `state: open | restricted | closed` and an optional `reason` (e.g. `pontoon-closure`, `vip-diversion`, `barricade`). The closure of most pontoon bridges and VIP-driven diversions *caused* the cascade in 2025, so closing/restricting an edge is a state change that re-runs the whole pipeline: flow re-routes to remaining edges, downstream nodes recompute, and the cascade check (below) catches any new red node the closure creates. This makes "what happens if we close this bridge" a first-class, modeled question rather than a guess.
+
 ### Zone (`zones.json`) — research gap A
 
 ```jsonc
@@ -146,7 +148,7 @@ Each reasoner is a pure function `(graph, context) -> events[]`. The pipeline ru
 - **sensorTrust** — flags nodes with no recent observation (stale) or no observing camera (coverage gap); sets `status: 'unknown'` and lowers confidence. Missing data never reads as `stable`.
 - **physiology** — combines `weather.heatIndex` / cold-wet exposure and node `vulnerabilityIndex` into a flow-speed modifier (slower crowd → higher density) and a medical-demand term. Produces the **heat / medical** risk facet.
 - **flow** — `outflow = population × outflowRatePerMinute × routeShare`; computes edge `current_flow_per_minute`; applies a **counterflow** penalty on bidirectional edges and a **merge** density multiplier where multiple edges converge; derives **queue** length and average wait at control nodes (gap C).
-- **density** — `density = population / area_m2`; classifies on the crowd-safety scale (3/4/5/6 p/m²). Produces the **stampede** risk facet.
+- **density** — `density = population / area_m2`; classifies on the crowd-safety scale (3/4/5/6 p/m²). Produces the **stampede** risk facet. Also computes a **stagnation** signal — high density combined with near-zero flow (`density ≥ strain AND current_flow_per_minute ≈ 0`). Validated by Kumbh 2025: the lethal condition cited was *crowd stagnation*, not density alone ("keeping the crowd stagnant is the recipe for mismanagement"). Stagnation escalates the stampede facet a level and is the trigger for "get the crowd moving" recommendations (open an exit, release a barricade) distinct from "reduce inflow."
 - **predict** — `future_population_15m = current + expected_inflow − expected_outflow`; `congestion = future / capacity_safe`; egress time = `population / Σ(exit edge safe flow)`; projects queue. Emits Prediction objects with `supporting_observation_ids`.
 - **river** — combines depth/current/`rescueAccessMinutes` into the **drowning** risk facet for ghat/river nodes.
 - **resources** — computes availability and dispatch latency per resource type; exposes feasibility to the recommender.
@@ -161,6 +163,7 @@ A generic evaluator loads `recommendation-rules.json` and evaluates each `when` 
 1. **Bridge diversion** — bridge predicted congestion > 0.90 within 15 min AND Route B < 0.70 → redirect flow to Route B; channels: public_announcement, volunteer_instruction.
 2. **Gate metering** — Sangam Ghat predicted over capacity → slow inflow at Entry Gate.
 3. **Medical / river dispatch** — a high-risk node within reach of Medical Camp / River Safety Post → dispatch the appropriate team.
+4. **Stagnation release** (validated by Kumbh 2025) — a node in stagnation (high density, near-zero flow) → open an exit / release a barricade / re-open a restricted edge to restore movement. This is the action class that was *missing* in 2025, when crowds went stagnant against closed pontoon bridges. Distinct from diversion (reroute upstream) and metering (slow inflow): here the fix is *downstream egress*.
 
 **Expected impact is a genuine what-if recompute.** For diversion, change Entry Gate's `routeShare` (e.g. 75/25 → 40/60), re-run `predict` across the whole graph, and report the real before/after congestion. The recompute also:
 
@@ -174,6 +177,8 @@ Each Recommendation carries `confidence`, `expected_impact_score`, `time_to_act_
 ## Demo Fidelity
 
 The Amrit Snan Morning Surge story is preserved but **earned**. Seed data (`nodes.json`, `scenario-events.json`, outflow rates) is tuned so the *computed* bridge risk lands near the documented beat (~90%+ at the surge step, with a meaningful diversion drop). The narrative is identical; the numbers now fall out of the model and would change correctly if the data changed.
+
+**Narrative framing (validated by Kumbh 2025 — see [06-kumbh-2025-validation.md](../../06-kumbh-2025-validation.md)).** The research found that detection was *not* the gap in 2025: AI cameras already sent timely surge alerts; what failed was the **action / coordination loop** after the alert. So the demo leads with **closing that loop**, not with prediction-as-novelty. The line is: *"Same cameras. Same control room. Now every alert becomes one specific, sized, pre-emptive action — with a 10–15 minute head start."* The claim is decision-support, never prevention-guarantee: *"flags the upstream surge with ~10–15 min lead and a specific diversion,"* with impact discounted by realistic compliance.
 
 ## Coordinates
 

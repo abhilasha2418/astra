@@ -24,7 +24,9 @@ The first proof of concept focuses on crowd flow intelligence for Kumbh Mela:
 - [Hackathon MVP](docs/03-hackathon-mvp.md)
 - [Technical Architecture](docs/04-technical-architecture.md)
 - [Kumbh MVP And Data Strategy](docs/05-kumbh-mvp-and-data-strategy.md)
+- [Maha Kumbh 2025 Problem Validation](docs/06-kumbh-2025-validation.md)
 - [Implementation Design Spec](docs/superpowers/specs/2026-06-27-spatial-intelligence-design.md)
+- [SKG Engine Design Spec](docs/superpowers/specs/2026-06-27-skg-engine-design.md)
 
 ## Current Scope
 
