@@ -29,3 +29,13 @@ The first proof of concept focuses on crowd flow intelligence for Kumbh Mela:
 ## Current Scope
 
 This repository currently contains the product and architecture foundation. It intentionally avoids implementation until the graph model, MVP boundaries, and demo story are clear.
+
+## Preview The UI
+
+Run a local static server from the repository root:
+
+```bash
+python3 -m http.server 4173
+```
+
+Then open `http://localhost:4173`.

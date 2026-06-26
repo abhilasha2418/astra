@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Astra Command Center</title>
+    <link rel="icon" href="./src/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./src/styles.css">
+  </head>
+  <body>
+    <div class="shell">
+      <header class="command-header" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Astra / Kumbh Spatial Intelligence</p>
+          <h1 id="page-title">Amrit Snan morning surge</h1>
+        </div>
+        <div class="header-status" aria-live="polite">
+          <span class="status-dot"></span>
+          <span id="scenario-clock">05:30</span>
+          <span id="scenario-label">Scenario active</span>
+        </div>
+      </header>
+
+      <main class="dashboard" aria-label="Astra command center dashboard">
+        <section class="route-panel panel" aria-labelledby="route-title">
+          <div class="section-heading">
+            <p class="eyebrow">Spatial graph</p>
+            <h2 id="route-title">Pilgrim flow toward Sangam</h2>
+          </div>
+          <div class="route-map" id="route-map" aria-label="Kumbh route graph"></div>
+        </section>
+
+        <section class="center-column" aria-label="Operational metrics">
+          <article class="thesis-card panel">
+            <p class="eyebrow">Prediction</p>
+            <h2 id="bridge-thesis">Main Bridge crosses safe capacity in 12 minutes.</h2>
+            <p id="bridge-explainer">
+              High inflow from Entry Gate during the Amrit Snan window is pushing the primary bridge toward critical density.
+            </p>
+          </article>
+
+          <section class="metric-grid" id="metric-grid" aria-label="Live pressure cards"></section>
+        </section>
+
+        <aside class="recommendation-panel panel" aria-labelledby="recommendation-title">
+          <div class="section-heading">
+            <p class="eyebrow">Recommended action</p>
+            <h2 id="recommendation-title">Redirect before the bottleneck forms</h2>
+          </div>
+          <div class="recommendation-callout">
+            <span class="callout-token">Route B</span>
+            <p>Redirect <strong>35%</strong> of Entry Gate flow and meter the main bridge approach.</p>
+          </div>
+          <dl class="impact-list" id="impact-list"></dl>
+          <div class="communication-box">
+            <p class="eyebrow">Communication</p>
+            <p>Activate public announcement, variable message display, and volunteer instruction at Entry Gate.</p>
+          </div>
+        </aside>
+      </main>
+
+      <section class="timeline-panel panel" aria-labelledby="timeline-title">
+        <div>
+          <p class="eyebrow">Scenario playback</p>
+          <h2 id="timeline-title">Amrit Snan pressure curve</h2>
+        </div>
+        <div class="timeline-controls" id="timeline-controls" role="list"></div>
+      </section>
+    </div>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>
