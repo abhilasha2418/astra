@@ -17,6 +17,39 @@ The MVP should prove five things:
 4. Crowd, camera, tag, volunteer, and item signals can narrow the search into a Cluster of Attention.
 5. A found or unidentified person can be connected to family or known people using identity, relationship, origin, and co-location signals.
 
+## Final Solution Considerations
+
+### Elderly And Multilingual UX
+
+Astra Reunite must work for elderly pilgrims, stressed families, and multilingual field staff. The primary user experience should assume low time, high noise, poor connectivity, emotional pressure, and variable literacy.
+
+UX requirements:
+
+- Large tap targets and high-contrast text for field use.
+- Minimal typing in the first report; prefer dropdowns, chips, icons, and voice-assisted staff entry where possible.
+- Progressive intake: create the case first, enrich later.
+- Multilingual labels for critical actions and report fields.
+- Language capture for the missing person and reporter.
+- "Ask in this language" hints for staff and volunteers.
+- Simple public wording: no technical terms like "containment confidence" in citizen-facing alerts.
+- Staff-facing reason text: every recommendation should say why it was made.
+- Elderly-safe rendezvous flow: route found elderly people to help desks, medical camps, or police booths rather than asking them to navigate independently.
+
+### Offline And Unstructured-Data Design
+
+The system must still work when networks are weak. It also must accept messy, incomplete, unstructured reports.
+
+System requirements:
+
+- Local-first seeded data and offline demo mode.
+- Client-side search, matching, and prediction for MVP.
+- Append-only local event queue when offline.
+- Sync-ready event model for future backend integration.
+- Unstructured notes accepted on every report, sighting, camera note, and volunteer update.
+- Structured extraction from notes where possible: color, clothing, language, relation, time, location, destination, behavior, item clues.
+- Search should work across both structured fields and raw notes.
+- Every extracted field should retain source text so operators can inspect evidence.
+
 ## Core System Modules
 
 ### 1. Intake And Reporting System
@@ -765,6 +798,27 @@ Out of scope for MVP:
 - Tamper-proof backend storage.
 - Exportable legal case packets.
 
+### 12. Offline And Unstructured Data System
+
+Purpose: keep the console useful when connectivity is weak and reports arrive as messy text.
+
+MVP features:
+
+- Local seeded dataset and deterministic offline demo mode.
+- Local event queue for newly created reports, sightings, notes, and actions.
+- Raw note field on missing reports, found-person reports, sightings, camera notes, and volunteer checks.
+- Deterministic extraction from raw notes into structured hints: clothing, color, time, location, language, relation, destination, behavior, and item clues.
+- Search over both structured fields and raw unstructured notes.
+- Extraction provenance: show which phrase produced which structured hint.
+- Offline status indicator and "pending sync" state.
+
+Out of scope for MVP:
+
+- Real sync server.
+- Conflict resolution across devices.
+- On-device speech recognition.
+- Full multilingual NLP.
+
 ## MVP Console Features
 
 ### Must Build
@@ -772,6 +826,7 @@ Out of scope for MVP:
 - Lost & Found console route/view.
 - Active incident list with priority and status.
 - Quick report intake.
+- Elderly-friendly, multilingual-aware intake controls.
 - Verification panel.
 - Registry search and duplicate detection.
 - Semantic search bar for natural-language report lookup.
@@ -783,6 +838,8 @@ Out of scope for MVP:
 - Relationship-aware match panel.
 - Task panel for volunteers, cameras, exits, and rendezvous points.
 - Event timeline.
+- Offline demo mode and local event queue.
+- Raw notes with extracted structured hints.
 - Seeded end-to-end demo data.
 
 ### Should Build If Time Allows
@@ -793,6 +850,7 @@ Out of scope for MVP:
 - Item clue linking.
 - Multiple Nashik search cells.
 - Role-based UI filtering.
+- Language-specific staff/volunteer hinting.
 - Parsed-query preview and "create report from search" action.
 - Simple metric dashboard: open, verified, located, reunited, containment.
 
@@ -806,6 +864,7 @@ Out of scope for MVP:
 - Telecom integration.
 - Real public notifications.
 - Multilingual voice intake.
+- Full multilingual NLP.
 - Full OpenStreetMap ingestion.
 
 ## MVP Demo Scenarios
@@ -880,6 +939,8 @@ Unit tests:
 - Lost/found item linking.
 - Semantic query parsing.
 - Semantic report ranking.
+- Raw note structured extraction.
+- Offline local event queue.
 - Search cell lookup.
 - Reachable node calculation.
 - Attractor ranking.
