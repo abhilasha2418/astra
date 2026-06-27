@@ -36,10 +36,36 @@ Inputs:
 
 MVP features:
 
-- Quick report form with person type, age band, clothing, last-seen location, last-seen time, reporter role/contact, optional photo ref, optional tag ID.
+- Quick report form with person type, age band, clothing, last-seen location, last-seen time, intended destination/activity, reporter role/contact, optional photo ref, optional tag ID.
 - Found-person form with current location, approximate description, communication status, and optional tag/item/photo ref.
 - Lost/found item form with category, location, description, and linked person/case if known.
 - Input role label: public, family, volunteer, police, medical, support, camera operator, control room.
+
+Missing-person intake should specifically capture:
+
+```text
+MissingPersonReport {
+  subjectProfile       // child | elderly | adult, age band, gender if known
+  clothing             // color, type, distinctive markers
+  lastSeenLocation
+  lastSeenTime
+  intendedDestination  // where they were supposed to go
+  intendedActivity     // snan | food | toilet | medical | rest | shopping | transport | meeting_point | unknown
+  plannedRouteHint     // optional: "from Ramkund to food stall near Gate 2"
+  groupContext         // family, travel group, camp, bus, village, meeting point
+  reporterContact
+  reporterRole
+  optionalTagId
+  optionalPhotoRef
+}
+```
+
+Why this matters:
+
+- If the family was going for food, food stalls and dining areas become high-priority Areas of Interest.
+- If the family was going for snan, ghats, queue lanes, changing areas, and river approaches become high-priority.
+- If the person was going to a toilet, medical camp, bus, parking, or meeting point, the search radius should be biased toward those destination nodes.
+- Destination intent turns a broad radius into a smaller ranked set of places the person was likely trying to reach.
 
 Out of scope for MVP:
 
@@ -145,6 +171,7 @@ Structured hints to extract:
 - Clothing type: shirt, kurta, saree, dress, dhoti, jacket.
 - Time: "since 2 PM", "30 minutes ago", "morning", "after snan".
 - Location: Ramkund, Gate 2, Medical Camp, Nashik Road, Panchavati.
+- Destination/activity intent: food, snan, toilet, medical help, rest, shopping, bus, parking, meeting point.
 - Origin: state, district, village, language.
 - Relation: son, daughter, husband, wife, mother, father, group leader.
 - Item clues: bag, phone, wallet, medicine, ID card.
@@ -167,6 +194,7 @@ semanticTextScore
 + structuredFieldMatch
 + spatialCellMatch
 + timeWindowMatch
++ destinationIntentMatch
 + relationshipHintMatch
 + sourceTrustWeight
 + activeIncidentBoost
@@ -251,10 +279,12 @@ Inputs:
 - Verified case.
 - Search cell.
 - Last-seen node and time.
+- Intended destination and activity.
 - Current time.
 - Walkable graph.
 - Crowd-flow direction.
 - Attractor nodes.
+- Destination-specific nodes such as food stalls, ghats, toilets, medical camps, parking, bus stands, and meeting points.
 - Exit nodes.
 - Signal observations.
 
@@ -267,6 +297,7 @@ SearchPrediction {
   searchCellId
   elapsedMinutes
   containmentConfidence
+  rankedAreasOfInterest[]
   rankedAttractors[]
   rankedExitRisks[]
   reachableNodes[]
@@ -279,10 +310,49 @@ MVP features:
 
 - Compute elapsed time.
 - Compute reachable nodes along graph edges.
+- Use intended destination/activity to rank Areas of Interest inside the reachable graph.
 - Rank attractors: medical, water, toilets, seating, help desks, ghats, police.
 - Rank exits by distance, flow direction, and transfer risk.
 - Calculate containment confidence.
 - Suggest volunteer and camera tasks.
+
+Destination-aware Area of Interest logic:
+
+```text
+if intendedActivity = food:
+  boost food stalls, langar/bhandara points, dining tents, water points, shaded seating
+
+if intendedActivity = snan:
+  boost ghats, river approaches, queue lanes, changing areas, bridge approaches
+
+if intendedActivity = toilet:
+  boost toilets, wash areas, water points, nearby help desks
+
+if intendedActivity = medical:
+  boost medical camps, ambulances, first-aid booths, shaded rest areas
+
+if intendedActivity = transport:
+  boost parking, bus stands, railway approaches, shuttle points, exit gates
+
+if intendedActivity = meeting_point:
+  boost original meeting point, help desks, PA points, landmarks, police booths
+```
+
+The engine should combine reachable radius with destination intent:
+
+```text
+areaOfInterestScore =
+  reachabilityScore
+  + destinationIntentScore
+  + attractorScore
+  + flowAlignmentScore
+  + signalSupportScore
+  - safetyRiskPenalty
+```
+
+Example:
+
+> Missing elderly man last seen near Ramkund at 2 PM. Family was going for food near Gate 2. The engine should prioritize reachable food stalls and seating/water points along the Ramkund -> Gate 2 route before generic nearby nodes.
 
 Out of scope for MVP:
 
