@@ -373,6 +373,123 @@ Layer 5: Action Coordination
   Radius notifications, volunteer redirection, camera tasking, reunion logging
 ```
 
+## Public And Open Data Sources To Add
+
+The current dataset is enough for the concept demo, but Astra Reunite becomes more credible if we show how public data can enrich the Spatial Knowledge Graph. These sources should be treated as graph enrichment inputs, not as personal tracking data.
+
+### High-value MVP enrichment
+
+**OpenStreetMap / Overpass**
+
+Use for:
+
+- Walkable roads, paths, alleys, bridges, ghats, and crossings.
+- Gates, parking exits, bus stops, railway stations, taxi/auto stands, and other perimeter nodes.
+- Attractor points such as drinking water, toilets, hospitals/clinics, police desks, shelters, religious sites, seating areas, and markets.
+- Route topology for reachable-radius and exit-breach calculations.
+
+Why it helps:
+
+- Converts the search radius from a circle into a realistic walking graph.
+- Helps identify where a missing person can actually move.
+- Helps rank exits and rest/help attractors.
+
+**Government open data / data.gov.in**
+
+Use for:
+
+- Official facility lists where available: hospitals, police stations, public services, administrative boundaries, public toilets, transport nodes, and emergency resources.
+- Cross-checking OSM-derived points against official sources.
+- Adding provenance to operational layers.
+
+Why it helps:
+
+- Makes the graph more authoritative.
+- Helps separate official facilities from crowd-contributed map points.
+- Supports government-facing credibility.
+
+**Bhuvan / ISRO geoportal**
+
+Use for:
+
+- Administrative boundaries.
+- Satellite/map context.
+- Terrain and geospatial reference layers where licensing allows.
+- Disaster-management or thematic layers if relevant to the event area.
+
+Why it helps:
+
+- Adds official Indian geospatial context.
+- Useful for pitch, planning, and map validation.
+- Should be used carefully because Bhuvan terms may restrict bulk download, redistribution, or real-time navigation use.
+
+### Useful supporting enrichment
+
+**Census / population density**
+
+Use for:
+
+- Settlement and ward-level density context.
+- Expected crowd origin/destination pressure around transit, markets, and residential spillover areas.
+- Prioritizing outside spillover routes when a person leaves the event boundary.
+
+Why it helps:
+
+- Improves the outside-area expansion model.
+- Helps explain why some outbound corridors are more likely than others.
+
+**GeoNames / gazetteer data**
+
+Use for:
+
+- Alternate names and spellings for places.
+- Search aliases for local landmarks.
+- Matching user-entered last-seen locations to map nodes.
+
+Why it helps:
+
+- Reporters may describe places with local names, old names, phonetic spellings, or nearby landmarks.
+- Better place resolution makes the first search radius smaller.
+
+**Weather and heat data**
+
+Use for:
+
+- Rain, heat, humidity, and severe-weather context.
+- Adjusting walking speed assumptions.
+- Increasing attractor weights for shade, water, medical camps, and shelters.
+
+Why it helps:
+
+- Vulnerable people are more likely to stop at water, shade, or medical help in heat or rain.
+- Weather-aware scoring makes the search model more humane and realistic.
+
+**OpenCelliD / public cell-tower locations**
+
+Use for:
+
+- Public aggregate tower-location context, not person tracking.
+- Future telecom-readiness: understanding where coarse tower sectors may map onto event zones.
+
+Why it helps:
+
+- Helps pitch the future telecom layer without needing sensitive user phone data.
+- Useful only as infrastructure context unless an authorized telecom emergency feed exists.
+
+### Data-source rule
+
+Every external source should be classified before use:
+
+```text
+public static map data       -> safe for MVP enrichment
+official facility data       -> safe if license permits
+environment/weather data     -> safe for scoring context
+aggregate infrastructure data -> safe with attribution and caveats
+person-level tracking data   -> future-only, verified case, authorized, audited
+```
+
+The MVP should prioritize OpenStreetMap/Overpass plus the provided datasets. That gives the strongest immediate gain: realistic paths, exits, attractors, and perimeter nodes.
+
 ## Future Expansion - Telecom Signals
 
 The current hackathon dataset does not include telecom data. It has missing-person records, CCTV locations, police stations, chokepoints/parking points, and zone boundaries. There are no cell-tower pings, call detail records, telecom operator feeds, GPS traces, or phone-location records.
