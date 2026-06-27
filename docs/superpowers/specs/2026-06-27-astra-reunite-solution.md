@@ -373,6 +373,40 @@ Layer 5: Action Coordination
   Radius notifications, volunteer redirection, camera tasking, reunion logging
 ```
 
+## Future Expansion - Telecom Signals
+
+The current hackathon dataset does not include telecom data. It has missing-person records, CCTV locations, police stations, chokepoints/parking points, and zone boundaries. There are no cell-tower pings, call detail records, telecom operator feeds, GPS traces, or phone-location records.
+
+Telecom can still be a future expansion, but it should be framed as a regulated emergency-assistance signal, not an MVP dependency.
+
+Potential future telecom signals:
+
+- Last known cell-tower area for a verified missing person's phone.
+- Coarse tower-sector movement, used only to decide whether the person likely left the event area.
+- Emergency operator response to a verified police/control-room request.
+- SMS or cell-broadcast alerts to users inside a search radius.
+- Opt-in family phone sharing during an active missing-person case.
+
+How telecom would help:
+
+- Confirm whether the search should stay inside the bounded mela zone or expand outward.
+- Prioritize exit corridors, parking, railway, and bus routes after a boundary breach.
+- Send targeted alerts to phones inside the predicted search radius.
+- Reduce wasted volunteer search when the person's phone has clearly moved outside the area.
+
+Governance constraints:
+
+- Use only for verified active missing-person cases.
+- Prefer coarse location over precise tracking.
+- Require control-room or police authorization.
+- Log every request, response, actor, and purpose.
+- Expire access automatically when the case is located or reunited.
+- Never make telecom data the only proof of identity or location.
+
+Product framing:
+
+> Telecom is a future emergency signal that can help decide whether the search remains bounded or must expand. It is not part of the current dataset and not required for the MVP.
+
 ## Success Metrics
 
 MVP metrics:
