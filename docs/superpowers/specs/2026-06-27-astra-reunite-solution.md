@@ -334,6 +334,86 @@ Demo headline:
 
 > Search radius reduced before the person left the area.
 
+## Nashik Geography Implications
+
+The Nashik-Trimbakeshwar mela should be modeled as a multi-core, corridor-driven geography rather than a single circular event ground.
+
+### Core spatial pattern
+
+**Dual sacred cores**
+
+- Nashik city / Panchavati / Ramkund / Godavari ghats.
+- Trimbakeshwar / Kushavart Kund / Trimbak temple approach.
+
+These cores are separated enough that a missing-person workflow must know whether the case belongs to the Nashik city search cell, the Trimbakeshwar search cell, or a corridor between them. A single shared registry is still required, but the spatial search should start inside the correct local cell.
+
+**River and ghat linearity**
+
+The Godavari and ghat approaches create a linear crowd geography. Search zones should follow riverbank paths, bridge crossings, ghat access points, and approach lanes rather than expanding as a simple circle.
+
+**Transit and exit corridors**
+
+Once a person leaves the bounded ghat/search cell, likely outbound movement is not random. It tends to follow exits, parking areas, bus stands, railway stations, road junctions, and major corridors. The current dataset already points to this pattern with locations such as Nashik Road Railway Station, CBS / Central Bus Stand, Thakkar Bazaar, Trimbak Road exit, Adgaon Parking, Madsangvi Transit, Dindori Road Crossing, and Sadhugram gates.
+
+**No-vehicle and pressure zones**
+
+Places like Panchavati / Ramkund access, Godavari ghat approaches, and Sadhugram gates should be treated as pedestrian pressure cells. Search teams should not only be sent to the nearest point; they should be routed along walkable access, with crush-risk and emergency access considered.
+
+### What this changes in Astra Reunite
+
+The engine should compute a **bounded search cell** before it computes a radius:
+
+```text
+case location
+-> identify local search cell
+-> identify exits from that cell
+-> compute reachable area along walkable graph
+-> rank attractors inside the cell
+-> monitor exits before expanding outside
+```
+
+For Nashik, search cells can be seeded as:
+
+- Ramkund / Panchavati / Godavari ghat cell.
+- Trimbakeshwar / Kushavart Kund cell.
+- Sadhugram gate cell.
+- Nashik Road transfer cell.
+- CBS / Thakkar Bazaar bus-transfer cell.
+- Parking and outbound-road cells such as Adgaon, Trimbak Road, Dindori Road, and Madsangvi.
+
+Each cell should have:
+
+- Entry nodes.
+- Exit nodes.
+- Attractor nodes.
+- Camera coverage.
+- Official staff points.
+- Volunteer staging points.
+- Escalation route to the next spillover cell.
+
+### Nashik-specific search behavior
+
+If the last-seen point is inside Ramkund/Panchavati:
+
+- Search ghats, water points, medical posts, seating, toilets, and bridge approaches first.
+- Put perimeter attention on ghat exits, Panchavati access roads, CBS direction, and Nashik Road transfer direction.
+- Treat "not seen at exit" as strong containment evidence.
+
+If the last-seen point is near Trimbakeshwar/Kushavart:
+
+- Search temple approach, kund access, queue lanes, water/medical points, and bus/parking exits first.
+- Monitor the Nashik-Trimbak corridor before expanding into Nashik city.
+
+If a case is near a transfer node:
+
+- Reduce containment confidence faster.
+- Notify transport staff and perimeter volunteers immediately.
+- Check outbound routes before interior attractors, because the person can leave the local cell quickly.
+
+This geography makes the product stronger:
+
+> Astra does not ask "how far could they walk in 20 minutes?" in open space. It asks "which bounded cell are they likely still inside, and which exits must be watched before the search explodes?"
+
 ## Why This Is Different
 
 Generic systems:
