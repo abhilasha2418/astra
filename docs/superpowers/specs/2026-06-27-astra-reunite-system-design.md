@@ -110,7 +110,96 @@ Out of scope for MVP:
 - Multi-user conflict resolution.
 - Large-scale dedupe across millions of records.
 
-### 4. Spatial Graph And Nashik Cell System
+### 4. Semantic Report Search System
+
+Purpose: let operators search messy reports using natural language.
+
+Example queries:
+
+```text
+"elderly man in red shirt missing since 2 PM from Ramkund"
+"child blue dress last seen near Gate 2"
+"woman from Bihar found near medical camp"
+"bag with medicines lost near Nashik Road station"
+"person speaking Maithili looking for son Ramesh"
+```
+
+The goal is not chatbot behavior. The goal is fast recall over incomplete reports, sightings, found-person notes, item reports, and relationship clues.
+
+MVP approach:
+
+```text
+natural language query
+-> normalize text
+-> extract structured hints
+-> run fuzzy text search
+-> apply spatial/time filters
+-> rank cases, incidents, sightings, and known contacts
+-> show reasons
+```
+
+Structured hints to extract:
+
+- Person type: child, elderly, adult, woman, man.
+- Clothing colors: red, white, blue, saffron, green, black.
+- Clothing type: shirt, kurta, saree, dress, dhoti, jacket.
+- Time: "since 2 PM", "30 minutes ago", "morning", "after snan".
+- Location: Ramkund, Gate 2, Medical Camp, Nashik Road, Panchavati.
+- Origin: state, district, village, language.
+- Relation: son, daughter, husband, wife, mother, father, group leader.
+- Item clues: bag, phone, wallet, medicine, ID card.
+
+Searchable records:
+
+- Missing-person reports.
+- Found-person reports.
+- Crowd sightings.
+- Camera notes.
+- Tag scans.
+- Lost/found item reports.
+- Separation incidents.
+- Known-person and group records.
+
+Ranking should combine:
+
+```text
+semanticTextScore
++ structuredFieldMatch
++ spatialCellMatch
++ timeWindowMatch
++ relationshipHintMatch
++ sourceTrustWeight
++ activeIncidentBoost
+```
+
+MVP implementation can be deterministic:
+
+- Token normalization.
+- Synonym map.
+- Color and clothing dictionaries.
+- Time parser for simple phrases.
+- Location alias map.
+- Fuzzy token matching.
+- Field-level scoring.
+
+Future implementation can add embeddings or an LLM parser, but the demo should not depend on a remote AI service.
+
+MVP features:
+
+- Global search bar in the Lost & Found console.
+- Parsed-query preview: "red shirt", "since 2 PM", "Ramkund".
+- Ranked results across reports, sightings, incidents, and items.
+- Reason badges: "same color", "same cell", "within 20 minutes", "mentions son Ramesh".
+- One-click action: open case, link as evidence, create new report from query, or merge candidate.
+
+Out of scope for MVP:
+
+- Full multilingual semantic search.
+- Live speech-to-search.
+- Vector database.
+- Remote embedding service.
+
+### 5. Spatial Graph And Nashik Cell System
 
 Purpose: represent the event as bounded search cells and movement corridors.
 
@@ -153,7 +242,7 @@ Out of scope for MVP:
 - Real-time road closures.
 - Full Overpass ingestion pipeline.
 
-### 5. Search Compression Engine
+### 6. Search Compression Engine
 
 Purpose: compute where to look first.
 
@@ -201,7 +290,7 @@ Out of scope for MVP:
 - Probabilistic simulation.
 - Optimization across hundreds of teams.
 
-### 6. Signal Fusion And Cluster Of Attention System
+### 7. Signal Fusion And Cluster Of Attention System
 
 Purpose: turn many messy signals into actionable spatial confidence.
 
@@ -235,7 +324,7 @@ Out of scope for MVP:
 - Real geofenced push delivery.
 - High-volume spam prevention.
 
-### 7. Relationship-Aware Match Engine
+### 8. Relationship-Aware Match Engine
 
 Purpose: identify a missing/found person and connect them to family, companions, or known people.
 
@@ -377,7 +466,7 @@ Out of scope for MVP:
 - Real group pre-registration at scale.
 - Automated public disclosure of family contacts.
 
-### 8. Notification And Tasking System
+### 9. Notification And Tasking System
 
 Purpose: tell the right people what to do.
 
@@ -398,7 +487,7 @@ Out of scope for MVP:
 - WhatsApp integration.
 - Live dispatch integration.
 
-### 9. Camera Review System
+### 10. Camera Review System
 
 Purpose: use cameras as targeted verification, not mass surveillance.
 
@@ -415,7 +504,7 @@ Out of scope for MVP:
 - Real biometric matching.
 - Automatic person re-identification.
 
-### 10. Audit And Timeline System
+### 11. Audit And Timeline System
 
 Purpose: preserve operational memory.
 
@@ -440,6 +529,7 @@ Out of scope for MVP:
 - Quick report intake.
 - Verification panel.
 - Registry search and duplicate detection.
+- Semantic search bar for natural-language report lookup.
 - Reciprocal separation incident detection.
 - Lost/found item basic reporting.
 - Map or map-like panel with search cells, last-known node, exits, attractors, and clusters.
@@ -458,6 +548,7 @@ Out of scope for MVP:
 - Item clue linking.
 - Multiple Nashik search cells.
 - Role-based UI filtering.
+- Parsed-query preview and "create report from search" action.
 - Simple metric dashboard: open, verified, located, reunited, containment.
 
 ### Defer
@@ -513,17 +604,26 @@ Out of scope for MVP:
 4. Search engine treats Gate 2 as a clue and updates exit-breach risk.
 5. Medical/help-desk staff are notified.
 
+### Scenario 5 - Semantic Search
+
+1. Operator searches: "elderly man red shirt missing since 2 PM from Ramkund."
+2. Search system extracts age/person type, red clothing, time, and Ramkund/Panchavati cell.
+3. Results rank matching missing reports, crowd sightings, camera notes, and found-person cases.
+4. Operator opens the top result and links a nearby sighting as evidence.
+5. Search prediction updates the Cluster of Attention.
+
 ## Build Order Recommendation
 
 1. Data model and seeded Reunite dataset.
 2. Registry and incident graph.
-3. Verification state machine.
-4. Spatial cell model and search compression engine.
-5. Relationship-aware match engine.
-6. Signal fusion and Cluster of Attention.
-7. Console UI.
-8. Mock notifications, camera notes, tag scans, and item clues.
-9. Demo scenarios and tests.
+3. Semantic report search.
+4. Verification state machine.
+5. Spatial cell model and search compression engine.
+6. Relationship-aware match engine.
+7. Signal fusion and Cluster of Attention.
+8. Console UI.
+9. Mock notifications, camera notes, tag scans, and item clues.
+10. Demo scenarios and tests.
 
 ## Testing Requirements
 
@@ -533,6 +633,8 @@ Unit tests:
 - Duplicate report merge.
 - Reciprocal separation detection.
 - Lost/found item linking.
+- Semantic query parsing.
+- Semantic report ranking.
 - Search cell lookup.
 - Reachable node calculation.
 - Attractor ranking.
