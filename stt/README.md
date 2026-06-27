@@ -63,6 +63,71 @@ const { text, language } = await transcribeFile("clip.mp3");   // language auto-
 
 Leave `language` off to auto-detect.
 
+## Voice → structured report (intake agent)
+
+The STT text is only step one. The **intake agent** folds that text into the Astra
+`report` schema and — when a *major* field is still missing — asks the reporter for
+it **in their own language**. It's a conversation: speak → form fills → it asks back →
+you answer by voice → it merges. State lives with the caller, so the agent stays
+stateless and drop-in.
+
+- **Extracts** the human-stated fields: `type, person_name, gender, age_band,
+  language, origin_state, origin_district, physical_description, last_seen_text,
+  reporter_mobile, remarks`. System/derived columns (ids, embeddings, geom, tsv, …)
+  are left to the DB.
+- **Never invents** anything — unstated fields stay `null`; enums are honoured.
+- **Asks only for the majors** if missing: `person_name, gender, age_band,
+  physical_description, last_seen_text, reporter_mobile`.
+- Reuses your **`GROQ_API_KEY`** (tool-calling on `llama-3.3-70b-versatile`) — no new key.
+
+### Try it
+```bash
+npm run serve                 # then open http://localhost:8090/report.html  (full voice loop)
+
+# CLI (text in — in production this text comes from STT):
+npm run report -- "मेरी बेटी खो गई है, करीब पाँच साल की, लाल फ्रॉक में"
+npm run report -- clip.wav                       # transcribe a file, then fill
+npm run report -- "उसका नाम रिया है" --state r.json   # multi-turn: load+save the report
+```
+
+### HTTP
+| Method | Path | Body | Returns |
+|---|---|---|---|
+| `POST` | `/report` | JSON `{ text, report?, language? }` | `{ report, missing, clarifyingQuestion, complete }` |
+| `POST` | `/voice-report` | multipart `audio` + optional `report` (JSON string), `?language=` | STT fields **plus** `{ report, missing, clarifyingQuestion, complete }` |
+
+`/voice-report` does transcribe-then-fill in one call. Pass the returned `report`
+back on the next turn to continue the conversation.
+
+### Spoken follow-ups (natural voice)
+The follow-up question is also **read aloud** so a reporter who can't read can answer
+hands-free. By default the browser speaks it (now **language-aware** — it picks the
+best Hindi/Tamil/… voice instead of a robotic English one). For a fully **neural**
+voice, set a TTS key and the UI uses it automatically:
+
+| Method | Path | Body | Returns |
+|---|---|---|---|
+| `POST` | `/speak` | JSON `{ text, language?, provider? }` | `{ audioBase64, contentType, provider }` |
+
+| Provider | Key | Best for |
+|---|---|---|
+| `sarvam` | `SARVAM_API_KEY` | most natural Indian-language voices (Bulbul) |
+| `openai` | `OPENAI_API_KEY` | natural, follows the text's language |
+| `groq` | `GROQ_API_KEY` | very natural but English/Arabic only |
+
+Pick one via `TTS_PROVIDER` (see `.env.example`). No key set → browser voice fallback.
+
+### Files
+| File | Role |
+|---|---|
+| `report-schema.js` | report fields, enums, major-field list, tool JSON schema |
+| `report-agent.js` | `fillReport()` — extract + merge + ask (Groq/OpenAI tool-calling) |
+| `report-cli.js` | terminal intake (text or audio file) |
+| `tts.js` | `synthesize()` — natural voice for the follow-up (Sarvam/OpenAI/Groq) |
+| `public/report.html` | full voice loop: record → fill → spoken follow-up → repeat |
+
+Swap the model with `AGENT_PROVIDER` / `AGENT_MODEL` (see `.env.example`).
+
 ## Switching provider
 
 Set `STT_PROVIDER` in `.env` (or `?provider=` per request):

@@ -6,7 +6,8 @@
   "main": "transcribe.js",
   "scripts": {
     "serve": "node --env-file-if-exists=.env server.js",
-    "cli": "node --env-file-if-exists=.env cli.js"
+    "cli": "node --env-file-if-exists=.env cli.js",
+    "report": "node --env-file-if-exists=.env report-cli.js"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.3.1",
