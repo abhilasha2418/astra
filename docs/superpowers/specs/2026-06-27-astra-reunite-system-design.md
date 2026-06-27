@@ -70,6 +70,7 @@ Inputs:
 MVP features:
 
 - Quick report form with person type, age band, clothing, last-seen location, last-seen time, intended destination/activity, reporter role/contact, optional photo ref, optional tag ID.
+- Reporting context on every report: who reported it, where they reported from, when they reported, and whether they are family, volunteer, police, medical, staff, or public.
 - Found-person form with current location, approximate description, communication status, and optional tag/item/photo ref.
 - Lost/found item form with category, location, description, and linked person/case if known.
 - Input role label: public, family, volunteer, police, medical, support, camera operator, control room.
@@ -87,8 +88,14 @@ MissingPersonReport {
   intendedActivity     // snan | food | toilet | medical | rest | shopping | transport | meeting_point | unknown
   plannedRouteHint     // optional: "from Ramkund to food stall near Gate 2"
   groupContext         // family, travel group, camp, bus, village, meeting point
+  reporterName
   reporterContact
   reporterRole
+  relationshipToPerson
+  reportingLocation    // where the report was filed, not necessarily where person was last seen
+  reportingNodeId
+  reportedAt
+  reportedByStaffId
   optionalTagId
   optionalPhotoRef
 }
@@ -118,7 +125,10 @@ lastSeenTime
 intendedActivity      // snan | food | toilet | medical | rest | shopping | transport | meeting_point | unknown
 reporterName
 reporterContact
+reporterRole          // family | public | volunteer | police | medical | support | control_room
 relationshipToPerson
+reportingLocation
+reportedAt
 ```
 
 If only these fields are known, Astra can still:
@@ -128,6 +138,13 @@ If only these fields are known, Astra can still:
 - Estimate elapsed time and reachable area.
 - Rank initial Areas of Interest.
 - Start verification.
+
+Reporting location matters:
+
+- It separates **where the report was filed** from **where the person was last seen**.
+- If a family reports at a help desk far from the last-seen point, the search should still start at the last-seen cell.
+- If a volunteer reports after meeting the family in the field, the volunteer's location becomes a trusted current contact point.
+- If multiple reports are filed from different centers, reporting locations help detect cross-center duplicates and coordination gaps.
 
 ### Stage 2 - Search-Narrowing Fields
 
@@ -765,7 +782,57 @@ Out of scope for MVP:
 - WhatsApp integration.
 - Live dispatch integration.
 
-### 10. Camera Review System
+### 10. Volunteer Assisted Reporting Flow
+
+Purpose: make volunteers useful at the edge, not only as passive data collectors.
+
+When a volunteer reports a missing or found person, Astra should immediately return actionable results that the volunteer can use on the spot.
+
+Flow:
+
+```text
+volunteer creates report or sighting
+-> system records reporter identity and reporting location
+-> semantic search runs against active cases and sightings
+-> spatial engine checks current cell and nearby Clusters of Attention
+-> relationship-aware match engine ranks possible matches/contacts
+-> volunteer sees safe, role-appropriate results
+-> volunteer can show public-safe details or guide person to help point
+```
+
+Volunteer-visible result types:
+
+- Possible matching missing-person case.
+- Nearby active search for similar person.
+- Found-person/family match candidate.
+- Nearest help desk, medical camp, police booth, or rendezvous point.
+- "Keep person here; staff coming" instruction.
+- "Guide person to X help desk" instruction.
+
+Privacy boundary:
+
+- Volunteers should not see full family contact details by default.
+- Show only what is needed to help: case ID, first name or masked name, safe description, nearest official point, and next action.
+- Full contact reveal requires control-room or authorized staff confirmation.
+
+Example:
+
+> Volunteer reports: "elderly woman, blue saree, speaks Maithili, found near Water ATM 2." Astra returns: "Possible match: active case from Ramkund/Panchavati, reporter looking for mother, Maithili-speaking family. Keep person at Water ATM 2; notify Medical Camp B and Panchavati Help Desk."
+
+MVP features:
+
+- Volunteer report mode.
+- Immediate candidate results after submission.
+- Public-safe match card.
+- Action buttons: `Show safe details`, `Guide to help desk`, `Mark person with volunteer`, `Request staff confirmation`, `Link as sighting`.
+
+Out of scope for MVP:
+
+- Real volunteer authentication.
+- Real push dispatch to volunteer devices.
+- Full contact reveal workflow.
+
+### 11. Camera Review System
 
 Purpose: use cameras as targeted verification, not mass surveillance.
 
@@ -782,7 +849,7 @@ Out of scope for MVP:
 - Real biometric matching.
 - Automatic person re-identification.
 
-### 11. Audit And Timeline System
+### 12. Audit And Timeline System
 
 Purpose: preserve operational memory.
 
@@ -798,7 +865,7 @@ Out of scope for MVP:
 - Tamper-proof backend storage.
 - Exportable legal case packets.
 
-### 12. Offline And Unstructured Data System
+### 13. Offline And Unstructured Data System
 
 Purpose: keep the console useful when connectivity is weak and reports arrive as messy text.
 
@@ -837,6 +904,7 @@ Out of scope for MVP:
 - Cluster of Attention panel.
 - Relationship-aware match panel.
 - Task panel for volunteers, cameras, exits, and rendezvous points.
+- Volunteer-assisted reporting result cards.
 - Event timeline.
 - Offline demo mode and local event queue.
 - Raw notes with extracted structured hints.
@@ -916,6 +984,15 @@ Out of scope for MVP:
 4. Operator opens the top result and links a nearby sighting as evidence.
 5. Search prediction updates the Cluster of Attention.
 
+### Scenario 6 - Volunteer Assisted Report Result
+
+1. Volunteer reports a found elderly woman near Water ATM 2.
+2. Report captures volunteer identity, role, reporting location, and current node.
+3. Semantic and relationship-aware search return a possible active family case.
+4. Volunteer sees a public-safe result card with next action, not full family contact.
+5. Volunteer keeps the person at Water ATM 2 and requests staff confirmation.
+6. Help desk confirms the match and reunites the family.
+
 ## Build Order Recommendation
 
 1. Data model and seeded Reunite dataset.
@@ -941,6 +1018,8 @@ Unit tests:
 - Semantic report ranking.
 - Raw note structured extraction.
 - Offline local event queue.
+- Volunteer result-card privacy rules.
+- Reporting location versus last-seen location handling.
 - Search cell lookup.
 - Reachable node calculation.
 - Attractor ranking.
