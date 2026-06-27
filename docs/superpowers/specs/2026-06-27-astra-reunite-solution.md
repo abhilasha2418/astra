@@ -52,7 +52,9 @@ Capabilities:
 
 - Quick missing-person report.
 - Found-person report.
+- Lost-item and found-item report.
 - Cross-center registry.
+- Duplicate and reciprocal report resolution.
 - Optional tag, QR, card, badge, or wristband lookup.
 - Volunteer or official scan of a tag to locate family.
 - Family reporting with tag ID when available.
@@ -116,6 +118,85 @@ Verification signals:
 - Duplicate report is detected across centers.
 
 Low-confidence reports stay provisional. Verified reports activate search, notifications, and volunteer redirection.
+
+### Duplicate, Reciprocal, And Item Reports
+
+Large events will produce messy reports. The registry must treat report matching as a first-class feature, not as cleanup after search starts.
+
+**Multiple reports for the same missing person**
+
+The same person may be reported by a spouse, child, volunteer, police desk, and lost-and-found center. Astra should merge these into one master incident with multiple reporters and observations.
+
+```text
+MasterIncident {
+  id
+  type                  // missing_person | found_person | lost_item | found_item
+  linkedReportIds[]
+  primaryCaseId
+  confidence
+  status
+  timeline[]
+}
+```
+
+Duplicate detection should use:
+
+- Tag or QR ID.
+- Reporter phone / family contact.
+- Name, age band, gender, language, and home district.
+- Photo or description, if available.
+- Last-seen place and time.
+- Spatial overlap of search cones.
+- Matching found-person or sighting observations.
+
+The UI should show:
+
+> Possible duplicate: three reports likely describe the same elderly man near Ramkund/Panchavati. Merge into one active incident?
+
+**Two people reporting each other missing**
+
+This is a special case. A husband may report his wife missing, while the wife reports the husband missing at another desk. Astra should detect reciprocal reports and convert them into a **separation incident** rather than two unrelated searches.
+
+Detection signals:
+
+- Each report names the other person as companion or reporter.
+- Same family contact or tag group.
+- Same last-known group location.
+- Compatible times and nearby zones.
+- Both reports mention separation from family/group.
+
+Response:
+
+- Link both people into one incident.
+- Search for the pair's likely convergence points: original meeting point, nearest help desk, PA announcement point, lost-and-found center, and high-visibility landmarks.
+- Notify staff with both descriptions.
+- Reunite either person with the nearest verified help point before attempting full family handover.
+
+**Lost and found items**
+
+Lost-item reporting should be supported, but it should not dilute missing-person urgency.
+
+Item categories:
+
+- Phone.
+- Wallet / ID card.
+- Bag.
+- Keys.
+- Religious item.
+- Medical item.
+- Child/elderly aid item.
+
+Lost-item reports can use the same registry, tag/QR scan, location, and notification primitives, but with lower default priority and stricter notification limits. Exceptions should escalate when the item is safety-critical, such as medicine, ID documents, a child's bag, or an assistive device.
+
+Item reports help the person-search system indirectly:
+
+- A found phone, bag, or ID near an exit can become a spatial clue for a missing-person case.
+- A lost phone report can connect to a later found-person report through family contact.
+- A found medical item can flag vulnerability and alert nearby medical staff.
+
+Product rule:
+
+> Missing-person incidents drive the hero workflow. Lost-item incidents reuse the base registry and spatial clues, but they do not trigger wide radius alerts unless safety-critical.
 
 ### 3. Hero Layer - Spatial Search Compression
 
@@ -183,6 +264,8 @@ Signal types:
 ```text
 missing_report
 found_person_report
+lost_item_report
+found_item_report
 crowd_sighting
 tag_scan
 camera_note
@@ -300,17 +383,18 @@ Example perimeter alert:
 ```text
 1. Family, staff, or official creates a quick missing report.
 2. System assigns provisional status and checks report confidence.
-3. Official staff or control room verifies the case.
-4. Spatial engine computes search radius, drift cone, and containment confidence.
-5. Radius notifications go to nearby staff, volunteers, CCTV operators, and selected public users.
-6. Exit and perimeter nodes are monitored first.
-7. Crowd sightings, tag scans, volunteer checks, and camera notes flow back into Astra.
-8. Astra forms or updates Clusters of Attention.
-9. Volunteers are redirected to the highest-confidence cluster or exit risk.
-10. Person is located.
-11. Identity is confirmed through tag, family, staff, or operator review.
-12. Case is marked reunited.
-13. Full event trail is preserved for accountability and learning.
+3. Registry checks for duplicate, reciprocal, and related lost/found reports.
+4. Official staff or control room verifies the case.
+5. Spatial engine computes search radius, drift cone, and containment confidence.
+6. Radius notifications go to nearby staff, volunteers, CCTV operators, and selected public users.
+7. Exit and perimeter nodes are monitored first.
+8. Crowd sightings, tag scans, volunteer checks, and camera notes flow back into Astra.
+9. Astra forms or updates Clusters of Attention.
+10. Volunteers are redirected to the highest-confidence cluster or exit risk.
+11. Person is located.
+12. Identity is confirmed through tag, family, staff, or operator review.
+13. Case is marked reunited.
+14. Full event trail is preserved for accountability and learning.
 ```
 
 ## MVP Demo Story
